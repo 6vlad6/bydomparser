@@ -23,7 +23,7 @@ catalog_btn.click()
 
 
 # сбор всех категорий
-categories_blocks = driver.find_element(By.CLASS_NAME, 'catalog').find_element(By.TAG_NAME, 'ul').find_elements(By.TAG_NAME, 'li')
+categories_blocks = driver.find_element(By.CLASS_NAME, 'catalog').find_element(By.TAG_NAME, 'ul').find_elements(By.TAG_NAME, 'li')[1:-3]
 
 categories = []
 
@@ -35,7 +35,7 @@ for cat_block in categories_blocks:
 
 # можно редактировать пул категорий, при этом должно начинаться минимум с 1 и заканчивать не позже -3 (чтобы не
 # брать первую и три последние)
-for category_item in categories[1:-3]:
+for category_item in categories[:1]:
 
     print("Началась обработка категории: ", category_item['name'])
 
@@ -71,6 +71,8 @@ for category_item in categories[1:-3]:
     # можно выбирать разрез подкатегорий для обработки
     for subcategory in subcategories[:1]:
 
+        print("Началась обработка подкатегории: ", subcategory['name'])
+
         sub_url = subcategory['link']
         if need_split:
             sub_url = sub_url.split("https://www.bydom.by/")[1]
@@ -104,7 +106,7 @@ for category_item in categories[1:-3]:
                 subcategory_all_products.append(product_link)
 
         # можно выбирать разрез продуктов в подкатегории
-        for product in subcategory_all_products:  # обработка каждого продукта в подкатегории
+        for product in subcategory_all_products[:5]:  # обработка каждого продукта в подкатегории
 
             product_r = requests.get(MAIN_URL+product[1:])
             time.sleep(3)
@@ -125,9 +127,21 @@ for category_item in categories[1:-3]:
                 print("Не получилось взять название: ", product)
 
             try:
-                price_block = product_block.find('div', class_='price').find('div')
-                price = price_block.find('meta', attrs={'itemprop': 'price'})['content']
-                data[5] = price
+                try:
+                    price_block = product_block.find('div', class_='price').find('div')
+                    price = price_block.find('meta', attrs={'itemprop': 'price'})['content']
+                    data[5] = price
+                except:
+                    price_block = product_block.find('span', class_='price')
+                    price_arr = str(price_block.find('span', class_='old').text).split()
+                    print(price_arr)
+                    price_arr.pop()
+                    price_arr[0] = ''.join(price_arr[0][1:])
+                    print(price_arr)
+
+                    price = ''.join(price_arr)
+                    print(price)
+                    data[5] = price
             except:
                 print("Не получилось взять цену: ", product)
 
